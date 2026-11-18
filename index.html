@@ -240,7 +240,8 @@ function setTool(t){
  canvas.classList.toggle('active',t!=='cursor');
 }
 document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
-
+ 
+canvas.style.pointerEvents = 'auto';
 canvas.addEventListener('pointerdown',e=>{
  if(tool==='cursor')return;
  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
