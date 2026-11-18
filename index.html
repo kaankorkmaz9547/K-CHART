@@ -3,331 +3,375 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>K-Chart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K-CHART</title>
 <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080d18;color:#e5eaf3;font:13px Arial;overflow:hidden}
-header,.top,.bottom{background:#101827;border-bottom:1px solid #29364a}
-header{height:53px;display:flex;align-items:center;padding:0 16px;gap:20px}
-.logo{font-size:22px;font-weight:bold}.logo span{color:#4b9fff}
-.top{height:48px;display:flex;align-items:center;gap:6px;padding:5px 10px;overflow-x:auto}
-button,select{background:#172235;color:#dce6f5;border:1px solid #30415b;border-radius:5px;padding:8px;cursor:pointer}
-button:hover,button.active{background:#24446b;border-color:#4b9fff}
-.layout{display:flex;height:calc(100vh - 129px)}
-.left{width:48px;background:#101827;border-right:1px solid #29364a;display:flex;flex-direction:column;align-items:center;padding:7px 3px;gap:6px}
-.left button{width:38px;height:37px;padding:0;font-size:17px}
-.watch{width:190px;background:#101827;border-left:1px solid #29364a;padding:10px;overflow:auto}
-.watch h3{font-size:12px;color:#92a3bb}
-.asset{display:block;width:100%;text-align:left;margin:4px 0;background:transparent;border-color:transparent}
-.asset.active{background:#1d3049;border-color:#36577d}
-.asset small{display:block;color:#8498b4;margin-top:4px}
-main{flex:1;min-width:0;display:flex;flex-direction:column}
-.charthead{height:43px;display:flex;align-items:center;padding:0 12px;gap:12px;border-bottom:1px solid #29364a}
-#chartarea{flex:1;position:relative;min-height:0}
-#chart{position:absolute;inset:0}
-#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#overlay.active{pointer-events:auto;cursor:crosshair}
-.bottom{height:28px;border-top:1px solid #29364a;display:flex;align-items:center;padding:0 10px;color:#91a2b9;font-size:11px}
-#price{color:#25c88b}
-@media(max-width:700px){.watch{width:112px;padding:5px}.asset{font-size:11px}.asset small{font-size:9px}.left{width:42px}.left button{width:34px}}
+body{margin:0;background:#080d18;color:#e5e7eb;font-family:Arial,sans-serif}
+header{height:58px;background:#111827;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border-bottom:1px solid #293449}
+h2{font-size:19px;margin:0;color:#38bdf8}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px;background:#111827}
+button,select,input{background:#1e293b;color:white;border:1px solid #334155;padding:8px;border-radius:6px;cursor:pointer}
+button:hover{background:#334155}
+button.active{background:#0369a1}
+input[type=color]{width:42px;height:34px;padding:2px}
+#chart{height:calc(100vh - 145px);min-height:400px;width:100%}
+.settings{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:#0f172a;font-size:13px}
+.settings label{display:flex;align-items:center;gap:6px}
+@media(max-width:600px){#chart{height:65vh}.toolbar{gap:5px}button,select{padding:7px;font-size:12px}}
 </style>
 </head>
 <body>
+
 <header>
- <div class="logo">K-<span>CHART</span></div>
- <span style="color:#8294ad">PROFESSIONAL ANALYSIS</span>
- <span style="margin-left:auto;color:#8294ad">BETA 1.0</span>
+<h2>K-CHART</h2>
+<span style="font-size:12px;color:#94a3b8">Trading Analysis</span>
 </header>
 
-<div class="top">
- <select id="tf">
-  <option value="1m">1m</option><option value="5m">5m</option>
-  <option value="15m" selected>15m</option><option value="30m">30m</option>
-  <option value="1h">1H</option><option value="4h">4H</option><option value="1d">1D</option>
- </select>
- <button id="ema20">EMA 20</button>
- <button id="ema50">EMA 50</button>
- <button id="ema200">EMA 200</button>
- <button id="kill" class="active">Kill Zones</button>
- <button id="save">Kaydet</button>
- <button id="clear">Temizle</button>
+<div class="toolbar">
+<select id="symbol">
+<option value="BTCUSDT">BTCUSDT</option>
+<option value="ETHUSDT">ETHUSDT</option>
+<option value="SOLUSDT">SOLUSDT</option>
+</select>
+
+<select id="interval">
+<option value="1m">1 Dakika</option>
+<option value="5m">5 Dakika</option>
+<option value="15m">15 Dakika</option>
+<option value="1h" selected>1 Saat</option>
+<option value="4h">4 Saat</option>
+<option value="1d">1 Gün</option>
+</select>
+
+<button id="ema20">EMA 20</button>
+<button id="ema50">EMA 50</button>
+<button id="ema200">EMA 200</button>
+<button id="trend">Trend Çizgisi</button>
+<button id="horizontal">Yatay Çizgi</button>
+<button id="clearDrawings">Çizimleri Sil</button>
 </div>
 
-<div class="layout">
- <div class="left">
-  <button class="tool active" data-tool="cursor" title="İmleç">↖</button>
-  <button class="tool" data-tool="trend" title="Trend çizgisi">／</button>
-  <button class="tool" data-tool="hline" title="Yatay çizgi">―</button>
-  <button class="tool" data-tool="rect" title="Bölge">▱</button>
-  <button class="tool" data-tool="text" title="Yazı">T</button>
- </div>
-
- <main>
-  <div class="charthead">
-   <strong id="symbol">BTCUSDT</strong>
-   <span id="price">Veri bekleniyor</span>
-   <span style="margin-left:auto;color:#8ea0b9">BINANCE / NEW YORK TIME</span>
-  </div>
-  <div id="chartarea">
-   <div id="chart"></div>
-   <canvas id="overlay"></canvas>
-  </div>
-  <div class="bottom">
-   <span id="status">Bağlantı kuruluyor...</span>
-   <span style="margin-left:auto">K-CHART</span>
-  </div>
- </main>
-
- <aside class="watch">
-  <h3>İZLEME LİSTESİ</h3>
-  <button class="asset active" data-symbol="BTCUSDT" data-market="crypto">BTC / USDT<small>Bitcoin</small></button>
-  <button class="asset" data-symbol="ETHUSDT" data-market="crypto">ETH / USDT<small>Ethereum</small></button>
-  <button class="asset" data-symbol="SOLUSDT" data-market="crypto">SOL / USDT<small>Solana</small></button>
-  <h3>FOREX</h3>
-  <button class="asset" data-symbol="EURUSD" data-market="other">EUR / USD</button>
-  <button class="asset" data-symbol="GBPUSD" data-market="other">GBP / USD</button>
-  <button class="asset" data-symbol="USDJPY" data-market="other">USD / JPY</button>
-  <h3>EMTİA</h3>
-  <button class="asset" data-symbol="XAUUSD" data-market="other">XAU / USD<small>Gold</small></button>
-  <h3>ENDEKSLER</h3>
-  <button class="asset" data-symbol="NAS100" data-market="other">NASDAQ 100</button>
-  <button class="asset" data-symbol="US500" data-market="other">S&P 500</button>
-  <button class="asset" data-symbol="US30" data-market="other">DOW JONES</button>
- </aside>
+<div class="settings">
+<label>Arka plan <input type="color" id="bgColor" value="#080d18"></label>
+<label>Yükseliş <input type="color" id="upColor" value="#22c55e"></label>
+<label>Düşüş <input type="color" id="downColor" value="#ef4444"></label>
+<button id="saveSettings">Ayarları Kaydet</button>
+<button id="saveDrawings">Çizimleri Kaydet</button>
+<button id="killZones">Kill Zones</button>
 </div>
+
+<div id="chart"></div>
 
 <script>
-const chart=LightweightCharts.createChart(document.getElementById('chart'),{
- layout:{background:{color:'#080d18'},textColor:'#a8b6ca'},
- grid:{vertLines:{color:'#172337'},horzLines:{color:'#172337'}},
- rightPriceScale:{borderColor:'#29364a'},
- timeScale:{borderColor:'#29364a',timeVisible:true,secondsVisible:false},
- crosshair:{mode:0}
+const chartElement=document.getElementById('chart');
+
+let bgColor='#080d18';
+let upColor='#22c55e';
+let downColor='#ef4444';
+
+const chart=LightweightCharts.createChart(chartElement,{
+width:chartElement.clientWidth,
+height:chartElement.clientHeight,
+layout:{
+background:{type:'solid',color:bgColor},
+textColor:'#d1d5db'
+},
+grid:{
+vertLines:{color:'#172033'},
+horzLines:{color:'#172033'}
+},
+crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+rightPriceScale:{borderColor:'#334155'},
+timeScale:{
+borderColor:'#334155',
+timeVisible:true,
+secondsVisible:false
+}
 });
 
 const candles=chart.addCandlestickSeries({
- upColor:'#20bd87',downColor:'#f05c73',
- borderUpColor:'#20bd87',borderDownColor:'#f05c73',
- wickUpColor:'#20bd87',wickDownColor:'#f05c73'
+upColor:upColor,
+downColor:downColor,
+borderUpColor:upColor,
+borderDownColor:downColor,
+wickUpColor:upColor,
+wickDownColor:downColor
 });
 
-const emaSeries={};
-[20,50,200].forEach(n=>{
- emaSeries[n]=chart.addLineSeries({
-  color:n===20?'#f5c451':n===50?'#42a5ff':'#d16cff',
-  lineWidth:2,visible:false,lastValueVisible:false
- });
-});
+let candleData=[];
+let emaSeries={};
+let drawingMode=null;
+let drawings=[];
+let killZonesVisible=false;
 
-const area=document.getElementById('chartarea');
-const canvas=document.getElementById('overlay');
-const ctx=canvas.getContext('2d');
+async function loadData(){
+const symbol=document.getElementById('symbol').value;
+const interval=document.getElementById('interval').value;
+try{
+const response=await fetch(
+`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=1000`
+);
+if(!response.ok)throw new Error('Veri alınamadı');
+const data=await response.json();
 
-let symbol='BTCUSDT',market='crypto',tf='15m';
-let data=[],socket=null,drawings=[],pending=null,tool='cursor';
-let killEnabled=true,loadId=0;
+candleData=data.map(d=>({
+time:Math.floor(d[0]/1000),
+open:Number(d[1]),
+high:Number(d[2]),
+low:Number(d[3]),
+close:Number(d[4])
+}));
 
-function resize(){
- const d=window.devicePixelRatio||1;
- canvas.width=area.clientWidth*d;
- canvas.height=area.clientHeight*d;
- ctx.setTransform(d,0,0,d,0,0);
- chart.applyOptions({width:area.clientWidth,height:area.clientHeight});
- render();
+candles.setData(candleData);
+updateEMAs();
+chart.timeScale().fitContent();
+}catch(error){
+console.error(error);
+alert('Grafik verisi alınamadı. İnternet bağlantısını kontrol et.');
 }
-new ResizeObserver(resize).observe(area);
-
-function ema(values,period){
- let result=[],k=2/(period+1),prev=null;
- values.forEach((v,i)=>{
-  prev=prev===null?v.close:v.close*k+prev*(1-k);
-  if(i>=period-1)result.push({time:v.time,value:prev});
- });
- return result;
-}
-
-function drawSessions(){
- if(!killEnabled)return;
- const range=chart.timeScale().getVisibleRange();
- if(!range)return;
- const start=Number(range.from),end=Number(range.to);
- if(!Number.isFinite(start)||!Number.isFinite(end))return;
-
- const fmt=new Intl.DateTimeFormat('en-US',{
-  timeZone:'America/New_York',year:'numeric',month:'2-digit',
-  day:'2-digit'
- });
- function nyDate(ts){
-  const p=Object.fromEntries(fmt.formatToParts(new Date(ts*1000)).map(x=>[x.type,x.value]));
-  return [Number(p.year),Number(p.month),Number(p.day)];
- }
- function localToUtc(y,m,d,h,min){
-  let guess=Date.UTC(y,m-1,d,h,min)/1000;
-  for(let i=0;i<3;i++){
-   const parts=new Intl.DateTimeFormat('en-US',{
-    timeZone:'America/New_York',year:'numeric',month:'2-digit',
-    day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'
-   }).formatToParts(new Date(guess*1000));
-   const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
-   const shown=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)/1000;
-   const wanted=Date.UTC(y,m-1,d,h,min)/1000;
-   guess+=wanted-shown;
-  }
-  return guess;
- }
- const first=nyDate(start),last=nyDate(end);
- let day=Date.UTC(first[0],first[1]-1,first[2]);
- const lastDay=Date.UTC(last[0],last[1]-1,last[2]);
- const zones=[
-  ['ASIA',20,0,0,0,'rgba(180,120,255,.09)'],
-  ['LONDON',2,0,5,0,'rgba(60,140,255,.11)'],
-  ['NY AM',7,0,10,0,'rgba(30,200,140,.11)'],
-  ['NY PM',13,0,16,0,'rgba(255,170,60,.10)']
- ];
- for(;day<=lastDay+86400000;day+=86400000){
-  const d=new Date(day),y=d.getUTCFullYear(),m=d.getUTCMonth()+1,dd=d.getUTCDate();
-  zones.forEach(z=>{
-   const a=localToUtc(y,m,dd,z[1],z[2]);
-   let b=localToUtc(y,m,dd,z[3],z[4]);
-   if(b<=a)b+=86400;
-   const x1=chart.timeScale().timeToCoordinate(a);
-   const x2=chart.timeScale().timeToCoordinate(b);
-   if(x1===null||x2===null)return;
-   ctx.fillStyle=z[5];
-   ctx.fillRect(x1,0,x2-x1,area.clientHeight);
-   ctx.fillStyle='rgba(210,220,240,.7)';
-   ctx.font='10px Arial';
-   ctx.fillText(z[0],x1+5,15);
-  });
- }
 }
 
-function render(){
- ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
- drawSessions();
- function line(d,preview){
-  ctx.save();
-  ctx.strokeStyle=preview?'#ffd166':'#4b9fff';
-  ctx.fillStyle='rgba(75,159,255,.12)';
-  ctx.lineWidth=1.6;
-  ctx.setLineDash(preview?[5,4]:[]);
-  if(d.type==='trend'){
-   ctx.beginPath();ctx.moveTo(d.x1,d.y1);ctx.lineTo(d.x2,d.y2);ctx.stroke();
-  }
-  if(d.type==='hline'){
-   ctx.beginPath();ctx.moveTo(0,d.y1);ctx.lineTo(canvas.clientWidth,d.y1);ctx.stroke();
-  }
-  if(d.type==='rect'){
-   ctx.fillRect(d.x1,d.y1,d.x2-d.x1,d.y2-d.y1);
-   ctx.strokeRect(d.x1,d.y1,d.x2-d.x1,d.y2-d.y1);
-  }
-  if(d.type==='text'){
-   ctx.setLineDash([]);ctx.fillStyle='#ffd166';
-   ctx.font='14px Arial';ctx.fillText(d.text,d.x1,d.y1);
-  }
-  ctx.restore();
- }
- drawings.forEach(d=>line(d,false));
- if(pending)line(pending,true);
+function calculateEMA(data,period){
+const k=2/(period+1);
+let ema=data[0].close;
+return data.map((d,i)=>{
+ema=i===0?d.close:d.close*k+ema*(1-k);
+return {time:d.time,value:ema};
+});
 }
-chart.timeScale().subscribeVisibleTimeRangeChange(render);
 
-function setTool(t){
- tool=t;
- document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
- canvas.classList.toggle('active',t!=='cursor');
+function updateEMAs(){
+[20,50,200].forEach(period=>{
+if(emaSeries[period]){
+emaSeries[period].setData(calculateEMA(candleData,period));
 }
-document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
- 
-canvas.style.pointerEvents = 'auto';
-canvas.addEventListener('pointerdown',e=>{
- if(tool==='cursor')return;
- const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
- if(tool==='text'){
-  const text=prompt('Grafiğe yazılacak not:');
-  if(text){drawings.push({type:'text',x1:x,y1:y,text});render()}
-  return;
- }
- pending={type:tool,x1:x,y1:y,x2:x,y2:y};
- canvas.setPointerCapture(e.pointerId);
 });
-canvas.addEventListener('pointermove',e=>{
- if(!pending)return;
- const r=canvas.getBoundingClientRect();
- pending.x2=e.clientX-r.left;pending.y2=e.clientY-r.top;render();
-});
-canvas.addEventListener('pointerup',()=>{
- if(!pending)return;
- if(pending.type==='hline')pending.y2=pending.y1;
- drawings.push(pending);pending=null;render();
-});
+}
 
-document.getElementById('save').onclick=()=>{
- localStorage.setItem('kchart:'+symbol+':'+tf,JSON.stringify(drawings));
- document.getElementById('status').textContent='Çizimler kaydedildi';
-};
-document.getElementById('clear').onclick=()=>{
- if(confirm('Bu grafikteki çizimler silinsin mi?')){drawings=[];render()}
-};
-[20,50,200].forEach(n=>{
- document.getElementById('ema'+n).onclick=e=>{
-  const visible=!emaSeries[n].options().visible;
-  emaSeries[n].applyOptions({visible});
-  e.target.classList.toggle('active',visible);
- };
+function toggleEMA(period){
+if(emaSeries[period]){
+chart.removeSeries(emaSeries[period]);
+delete emaSeries[period];
+document.getElementById('ema'+period).classList.remove('active');
+}else{
+const colors={20:'#facc15',50:'#38bdf8',200:'#c084fc'};
+emaSeries[period]=chart.addLineSeries({
+color:colors[period],
+lineWidth:2,
+priceLineVisible:false,
+lastValueVisible:true
 });
-document.getElementById('kill').onclick=e=>{
- killEnabled=!killEnabled;e.target.classList.toggle('active',killEnabled);render();
+emaSeries[period].setData(calculateEMA(candleData,period));
+document.getElementById('ema'+period).classList.add('active');
+}
+}
+
+document.getElementById('ema20').onclick=()=>toggleEMA(20);
+document.getElementById('ema50').onclick=()=>toggleEMA(50);
+document.getElementById('ema200').onclick=()=>toggleEMA(200);
+
+document.getElementById('symbol').onchange=loadData;
+document.getElementById('interval').onchange=loadData;
+
+document.getElementById('bgColor').oninput=e=>{
+bgColor=e.target.value;
+chart.applyOptions({layout:{background:{type:'solid',color:bgColor}}});
 };
 
-async function load(){
- const id=++loadId;
- if(socket){socket.close();socket=null}
- document.getElementById('symbol').textContent=symbol;
- try{
-  if(market!=='crypto')throw new Error('Bu piyasanın veri sağlayıcısı henüz bağlanmadı.');
-  document.getElementById('status').textContent='Binance verisi yükleniyor...';
-  const url=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf}&limit=500`;
-  const response=await fetch(url);
-  if(!response.ok)throw new Error('Veri alınamadı: '+response.status);
-  const rows=await response.json();
-  if(id!==loadId)return;
-  data=rows.map(k=>({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4]}));
-  candles.setData(data);
-  [20,50,200].forEach(n=>emaSeries[n].setData(ema(data,n)));
-  chart.timeScale().fitContent();
-  const last=data[data.length-1];
-  document.getElementById('price').textContent=last.close.toLocaleString('en-US');
-  document.getElementById('status').textContent='Bağlandı · Binance canlı veri';
-  try{drawings=JSON.parse(localStorage.getItem('kchart:'+symbol+':'+tf)||'[]')}catch(e){drawings=[]}
-  render();
-  socket=new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${tf}`);
-  socket.onmessage=e=>{
-   if(id!==loadId)return;
-   const k=JSON.parse(e.data).k;
-   const candle={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c};
-   candles.update(candle);
-   const index=data.findIndex(x=>x.time===candle.time);
-   if(index>=0)data[index]=candle;else data.push(candle);
-   [20,50,200].forEach(n=>emaSeries[n].setData(ema(data,n)));
-   document.getElementById('price').textContent=candle.close.toLocaleString('en-US');
-  };
- }catch(err){
-  if(id!==loadId)return;
-  candles.setData([]);
-  document.getElementById('status').textContent=err.message;
-  document.getElementById('price').textContent='—';
- }
-}
-document.querySelectorAll('.asset').forEach(b=>b.onclick=()=>{
- document.querySelectorAll('.asset').forEach(x=>x.classList.remove('active'));
- b.classList.add('active');symbol=b.dataset.symbol;market=b.dataset.market;load();
+function updateCandleColors(){
+candles.applyOptions({
+upColor,downColor,
+borderUpColor:upColor,
+borderDownColor:downColor,
+wickUpColor:upColor,
+wickDownColor:downColor
 });
-document.getElementById('tf').onchange=e=>{tf=e.target.value;load()};
-window.addEventListener('resize',resize);
-resize();load();
+}
+
+document.getElementById('upColor').oninput=e=>{
+upColor=e.target.value;updateCandleColors();
+};
+document.getElementById('downColor').oninput=e=>{
+downColor=e.target.value;updateCandleColors();
+};
+
+// AYARLARI KAYDET
+document.getElementById('saveSettings').onclick=()=>{
+localStorage.setItem('kchartSettings',JSON.stringify({
+bgColor,upColor,downColor
+}));
+alert('Ayarlar kaydedildi!');
+};
+
+// AYARLARI YÜKLE
+function loadSettings(){
+const saved=localStorage.getItem('kchartSettings');
+if(!saved)return;
+const s=JSON.parse(saved);
+bgColor=s.bgColor||bgColor;
+upColor=s.upColor||upColor;
+downColor=s.downColor||downColor;
+
+document.getElementById('bgColor').value=bgColor;
+document.getElementById('upColor').value=upColor;
+document.getElementById('downColor').value=downColor;
+
+chart.applyOptions({
+layout:{background:{type:'solid',color:bgColor}}
+});
+updateCandleColors();
+}
+
+// ÇİZİM ARAÇLARI
+const trendButton=document.getElementById('trend');
+const horizontalButton=document.getElementById('horizontal');
+
+trendButton.onclick=()=>{
+drawingMode=drawingMode==='trend'?null:'trend';
+trendButton.classList.toggle('active',drawingMode==='trend');
+horizontalButton.classList.remove('active');
+};
+
+horizontalButton.onclick=()=>{
+drawingMode=drawingMode==='horizontal'?null:'horizontal';
+horizontalButton.classList.toggle('active',drawingMode==='horizontal');
+trendButton.classList.remove('active');
+};
+
+chart.subscribeClick(param=>{
+if(!drawingMode||!param.point||!param.time)return;
+
+const price=candles.coordinateToPrice(param.point.y);
+if(price===null)return;
+
+if(drawingMode==='horizontal'){
+const line=candles.createPriceLine({
+price,
+color:'#facc15',
+lineWidth:2,
+lineStyle:LightweightCharts.LineStyle.Solid,
+axisLabelVisible:true,
+title:'Yatay'
+});
+drawings.push({type:'horizontal',price});
+}
+
+if(drawingMode==='trend'){
+drawings.push({
+type:'trend',
+time:param.time,
+price
+});
+}
+
+drawingMode=null;
+trendButton.classList.remove('active');
+horizontalButton.classList.remove('active');
+});
+
+// ÇİZİMLERİ KAYDET
+document.getElementById('saveDrawings').onclick=()=>{
+localStorage.setItem('kchartDrawings',JSON.stringify(drawings));
+alert('Çizim verileri kaydedildi!');
+};
+
+// ÇİZİMLERİ SİL
+document.getElementById('clearDrawings').onclick=()=>{
+if(!confirm('Bütün çizimleri silmek istiyor musun?'))return;
+drawings=[];
+localStorage.removeItem('kchartDrawings');
+alert('Çizimler temizlendi. Sayfayı yenile.');
+};
+
+// NEW YORK KILL ZONES
+let killZoneLines=[];
+
+function addKillZones(){
+killZoneLines.forEach(line=>chart.removeSeries(line));
+killZoneLines=[];
+
+if(!killZonesVisible)return;
+
+const zones=[
+{hour:2,minute:0,title:'Asia'},
+{hour:7,minute:0,title:'London'},
+{hour:9,minute:30,title:'New York AM'},
+{hour:13,minute:30,title:'New York PM'}
+];
+
+const formatter=new Intl.DateTimeFormat('en-US',{
+timeZone:'America/New_York',
+year:'numeric',
+month:'2-digit',
+day:'2-digit'
+});
+
+const now=new Date();
+const today=formatter.formatToParts(now);
+const parts={};
+today.forEach(p=>parts[p.type]=p.value);
+
+zones.forEach(zone=>{
+const dateString=`${parts.year}-${parts.month}-${parts.day}T${String(zone.hour).padStart(2,'0')}:${String(zone.minute).padStart(2,'0')}:00`;
+
+const date=new Date(dateString+'Z');
+const utc=date.getTime();
+const offset=new Date(utc).toLocaleString('en-US',{timeZone:'America/New_York'});
+const nyDate=new Date(offset);
+
+const localTime=Date.UTC(
+Number(parts.year),
+Number(parts.month)-1,
+Number(parts.day),
+zone.hour,
+zone.minute
+);
+
+const utcTime=localTime+((new Date(localTime).getTimezoneOffset())*60000);
+
+const line=chart.addLineSeries({
+color:'#a78bfa',
+lineWidth:1,
+lineStyle:LightweightCharts.LineStyle.Dashed,
+priceLineVisible:false,
+lastValueVisible:false,
+crosshairMarkerVisible:false
+});
+
+const first=candleData[0];
+const last=candleData[candleData.length-1];
+if(first&&last){
+const y=(first.high+last.low)/2;
+line.setData([
+{time:first.time,value:y},
+{time:last.time,value:y}
+]);
+}
+killZoneLines.push(line);
+});
+}
+
+document.getElementById('killZones').onclick=()=>{
+killZonesVisible=!killZonesVisible;
+document.getElementById('killZones').classList.toggle('active',killZonesVisible);
+addKillZones();
+};
+
+// EKRAN BOYUTU
+window.addEventListener('resize',()=>{
+chart.applyOptions({
+width:chartElement.clientWidth,
+height:chartElement.clientHeight
+});
+});
+
+// BAŞLAT
+loadSettings();
+loadData();
 </script>
 </body>
 </html>
+
+
